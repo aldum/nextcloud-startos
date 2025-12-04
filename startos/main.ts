@@ -9,6 +9,12 @@ export const main = sdk.setupMain(async ({ effects, started }) => {
    */
   console.info('Starting Nextcloud...')
 
+  const store = await storeJson.read().once()
+  if (!store) {
+    throw Error("Store does not exist!")
+  }
+  const maintWindow = String(store.maintenanceWindowStart)
+
   const nextcloudSub = await sdk.SubContainer.of(
     effects,
     { imageId: 'nextcloud' },
@@ -40,6 +46,26 @@ export const main = sdk.setupMain(async ({ effects, started }) => {
   // @TODO check if need just domain or full urls
   const urls = uiInterface?.addressInfo?.urls
 
+
+  const nextCloudEnv = {
+    MAINTENANCE_WINDOW_START: maintWindow,
+    TRUSTED_PROXIES: '10.0.3.0/24',
+    NEXTCLOUD_TRUSTED_DOMAINS: urls?.join(' ')!,
+    CONFIG_FILE: '/var/www/html/config/config.php',
+    PGDATA,
+    NEXTCLOUD_PATH,
+    NEXTCLOUD_ADMIN_USER: 'admin',
+    PASSWORD_FILE: '/root/start9/password.dat',
+    INITIALIZED_FILE: '/root/initialized',
+    PHP_USER_FILE: '/var/www/html/.user.ini',
+    POSTGRES_DB: 'nextcloud',
+    POSTGRES_USER: 'nextcloud',
+    POSTGRES_PASSWORD: 'nextclouddbpassword',
+    POSTGRES_HOST: 'localhost',
+    EXISTING_DB: 'false',
+    PHP_MEMORY_LIMIT: '1024M',
+    PHP_UPLOAD_LIMIT: '20480M',
+  }
   /**
    * ======================== Daemons ========================
    */
@@ -47,27 +73,7 @@ export const main = sdk.setupMain(async ({ effects, started }) => {
     subcontainer: nextcloudSub,
     exec: {
       command: ['sh', '/scripts/nextcloud-run.sh'],
-      env: {
-        MAINTENANCE_WINDOW_START: String(
-          await storeJson.read((s) => s.maintenanceWindowStart),
-        ),
-        TRUSTED_PROXIES: '10.0.3.0/24',
-        NEXTCLOUD_TRUSTED_DOMAINS: urls?.join(' ')!,
-        CONFIG_FILE: '/var/www/html/config/config.php',
-        PGDATA,
-        NEXTCLOUD_PATH,
-        NEXTCLOUD_ADMIN_USER: 'admin',
-        PASSWORD_FILE: '/root/start9/password.dat',
-        INITIALIZED_FILE: '/root/initialized',
-        PHP_USER_FILE: '/var/www/html/.user.ini',
-        POSTGRES_DB: 'nextcloud',
-        POSTGRES_USER: 'nextcloud',
-        POSTGRES_PASSWORD: 'nextclouddbpassword',
-        POSTGRES_HOST: 'localhost',
-        EXISTING_DB: 'false',
-        PHP_MEMORY_LIMIT: '1024M',
-        PHP_UPLOAD_LIMIT: '20480M',
-      },
+      env: nextCloudEnv,
     },
     ready: {
       display: 'Web Interface',
