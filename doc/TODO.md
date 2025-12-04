@@ -90,7 +90,7 @@ ENV PHP_UPLOAD_LIMIT=20480M
 #### file models
 
 * nginx.conf ?
-* $CONFIG_FILE
+* $CONFIG_FILE - PHP array fileHelper?
   * `/var/www/html/config/config.php`
   * `/config/www/nextcloud/config/config.php`
 * $PHP_USER_FILE
