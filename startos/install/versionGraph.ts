@@ -9,18 +9,18 @@ export const versionGraph = VersionGraph.of({
   other,
   preInstall: async (effects) => {
     await storeJson.write(effects, storeDefaults)
-    await sdk.SubContainer.withTemp(
-      effects,
-      { imageId: 'nextcloud' },
-      sdk.Mounts.of().mountAssets({ subpath: null, mountpoint: '/scripts' }),
-      'nextcloud-init',
-      (subc) =>
-        subc.execFail(['sh', 'nextcloud-init.sh'], {
-          env: {
-            PGDATA,
-            NEXTCLOUD_PATH: NEXTCLOUD_DIR,
-          },
-        }),
-    )
+    // await sdk.SubContainer.withTemp(
+    //   effects,
+    //   { imageId: 'nextcloud' },
+    //   sdk.Mounts.of().mountAssets({ subpath: null, mountpoint: '/scripts' }),
+    //   'nextcloud-init',
+    //   (subc) =>
+    //     subc.execFail(['sh', '/scripts/nextcloud-init.sh'], {
+    //       env: {
+    //         PGDATA,
+    //         NEXTCLOUD_PATH: NEXTCLOUD_DIR,
+    //       },
+    //     }),
+    // )
   },
 })

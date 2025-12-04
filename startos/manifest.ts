@@ -25,7 +25,13 @@ export const manifest = setupManifest({
     nextcloud: {
       arch: architectures,
       source: {
-        dockerBuild: {},
+        dockerTag: "linuxserver/nextcloud:30.0.11-previous"
+      },
+    } as SDKImageInputSpec,
+    db: {
+      arch: architectures,
+      source: {
+        dockerTag: "postgres:15"
       },
     } as SDKImageInputSpec,
   },

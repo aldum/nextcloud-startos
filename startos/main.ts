@@ -1,12 +1,15 @@
 import { writeFile } from 'fs/promises'
 import { storeJson } from './fileModels/store.json'
 import { sdk } from './sdk'
-import { getNginxFile, uiPort, PGDATA, NEXTCLOUD_DIR as NEXTCLOUD_PATH } from './utils'
+import {
+  getNginxFile,
+  uiPort,
+  pgPort,
+  PGDATA,
+  NEXTCLOUD_DIR as NEXTCLOUD_PATH,
+} from './utils'
 
 export const main = sdk.setupMain(async ({ effects, started }) => {
-  /**
-   * ======================== Setup ========================
-   */
   console.info('Starting Nextcloud...')
 
   const store = await storeJson.read().once()
@@ -15,6 +18,18 @@ export const main = sdk.setupMain(async ({ effects, started }) => {
   }
   const maintWindow = String(store.maintenanceWindowStart)
 
+  const dbSub = await sdk.SubContainer.of(
+    effects,
+    { imageId: 'db' },
+    sdk.Mounts.of()
+      .mountVolume({
+        volumeId: 'db',
+        subpath: null,
+        mountpoint: '/var/lib/postgresql',
+        readonly: false,
+      }),
+    'db-sub'
+  )
   const nextcloudSub = await sdk.SubContainer.of(
     effects,
     { imageId: 'nextcloud' },
@@ -35,10 +50,10 @@ export const main = sdk.setupMain(async ({ effects, started }) => {
 
   // Configure nginx
   const maxBodySize = await storeJson.read((s) => s.maxBodySize).const(effects)
-  await writeFile(
-    `${nextcloudSub.rootfs}/etc/nginx/conf.d/default.conf`,
-    getNginxFile(maxBodySize!),
-  )
+  // await writeFile(
+  //   `${nextcloudSub.rootfs}/etc/nginx/conf.d/default.conf`,
+  //   getNginxFile(maxBodySize!),
+  // )
 
   // get interface details
   const uiInterface = await sdk.serviceInterface.getOwn(effects, 'ui').const()
@@ -68,20 +83,40 @@ export const main = sdk.setupMain(async ({ effects, started }) => {
   /**
    * ======================== Daemons ========================
    */
-  return sdk.Daemons.of(effects, started).addDaemon('nextcloud', {
-    subcontainer: nextcloudSub,
-    exec: {
-      command: ['sh', '/scripts/nextcloud-run.sh'],
-    },
-    ready: {
-      display: 'Web Interface',
-      fn: () =>
-        sdk.healthCheck.checkPortListening(effects, uiPort, {
-          successMessage: 'The web interface is ready',
-          errorMessage: 'The web interface is not ready',
-        }),
-    },
-    requires: [],
-  })
+  return sdk.Daemons.of(effects, started)
+    .addDaemon('db', {
+      subcontainer: dbSub,
+      exec: {
+        command: sdk.useEntrypoint(),
+        env: {
+          POSTGRES_PASSWORD: 'createastrongrandompw',
+        }
+      },
+      ready: {
+        display: null,
+        fn: () =>
+          sdk.healthCheck.checkPortListening(effects, pgPort, {
+            successMessage: '',
+            errorMessage: '',
+          }),
+      },
+      requires: [],
+    })
+    .addDaemon('nextcloud', {
+      subcontainer: nextcloudSub,
+      exec: {
         env: nextcloudEnv,
+        command: sdk.useEntrypoint(),
+        runAsInit: true,
+      },
+      ready: {
+        display: 'Web Interface',
+        fn: () =>
+          sdk.healthCheck.checkPortListening(effects, uiPort, {
+            successMessage: 'The web interface is ready',
+            errorMessage: 'The web interface is not ready',
+          }),
+      },
+      requires: ['db'],
+    })
 })
