@@ -46,8 +46,7 @@ export const main = sdk.setupMain(async ({ effects, started }) => {
   // @TODO check if need just domain or full urls
   const urls = uiInterface?.addressInfo?.urls
 
-
-  const nextCloudEnv = {
+  const nextcloudEnv = {
     MAINTENANCE_WINDOW_START: maintWindow,
     TRUSTED_PROXIES: '10.0.3.0/24',
     NEXTCLOUD_TRUSTED_DOMAINS: urls?.join(' ')!,
@@ -58,10 +57,10 @@ export const main = sdk.setupMain(async ({ effects, started }) => {
     PASSWORD_FILE: '/root/start9/password.dat',
     INITIALIZED_FILE: '/root/initialized',
     PHP_USER_FILE: '/var/www/html/.user.ini',
+    POSTGRES_HOST: 'localhost',
     POSTGRES_DB: 'nextcloud',
     POSTGRES_USER: 'nextcloud',
     POSTGRES_PASSWORD: 'nextclouddbpassword',
-    POSTGRES_HOST: 'localhost',
     EXISTING_DB: 'false',
     PHP_MEMORY_LIMIT: '1024M',
     PHP_UPLOAD_LIMIT: '20480M',
@@ -73,7 +72,6 @@ export const main = sdk.setupMain(async ({ effects, started }) => {
     subcontainer: nextcloudSub,
     exec: {
       command: ['sh', '/scripts/nextcloud-run.sh'],
-      env: nextCloudEnv,
     },
     ready: {
       display: 'Web Interface',
@@ -85,4 +83,5 @@ export const main = sdk.setupMain(async ({ effects, started }) => {
     },
     requires: [],
   })
+        env: nextcloudEnv,
 })
