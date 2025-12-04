@@ -15,6 +15,7 @@ export const manifest = setupManifest({
   supportSite: 'https://github.com/nextcloud/docker/issues',
   marketingSite: 'https://nextcloud.com',
   donationUrl: null,
+  docsUrl: 'https://github.com/Start9Labs/nextcloud-startos/docs/instructions.md',
   description: {
     short: 'A safe home for all your data',
     long: 'Access & share your files, calendars, contacts, mail & more from any device, on your terms.',
